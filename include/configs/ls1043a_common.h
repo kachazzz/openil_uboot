@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2015 Freescale Semiconductor
- * Copyright (C) 2019 NXP
+ * Copyright (C) 2019-2021 NXP
  */
 
 #ifndef __LS1043A_COMMON_H
@@ -51,9 +51,6 @@
 
 /* Generic Timer Definitions */
 #define COUNTER_FREQUENCY		25000000	/* 25MHz */
-
-/* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1024 * 1024)
 
 /* Serial Port */
 #define CONFIG_SYS_NS16550_SERIAL
@@ -149,6 +146,7 @@
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_MXC_I2C4		/* enable I2C bus 4 */
+#define CONFIG_SYS_I2C_MXC
 #else
 #define CONFIG_I2C_SET_DEFAULT_BUS_NUM
 #define CONFIG_I2C_DEFAULT_BUS_NUMBER 0
@@ -159,7 +157,9 @@
 #define CONFIG_PCIE1		/* PCIE controller 1 */
 #define CONFIG_PCIE2		/* PCIE controller 2 */
 #define CONFIG_PCIE3		/* PCIE controller 3 */
-
+#ifndef CONFIG_PCI
+#define CONFIG_PCI
+#endif
 #ifdef CONFIG_PCI
 #define CONFIG_PCI_SCAN_SHOW
 #endif

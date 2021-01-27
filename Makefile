@@ -707,7 +707,9 @@ UBOOTINCLUDE    := \
 			$(if $(CONFIG_HAS_THUMB2),, \
 				-I$(srctree)/arch/$(ARCH)/thumb1/include),) \
 		-I$(srctree)/arch/$(ARCH)/include \
-		-include $(srctree)/include/linux/kconfig.h
+		-include $(srctree)/include/linux/kconfig.h \
+		-I./app/canfestival/include \
+		-I./app/canfestival/include/timers_ls1021aiot
 
 NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
 CHECKFLAGS     += $(NOSTDINC_FLAGS)
@@ -730,6 +732,8 @@ libs-y += net/
 libs-y += disk/
 libs-y += drivers/
 libs-y += drivers/dma/
+libs-y += drivers/flexcan/
+libs-y += drivers/flextimer/
 libs-y += drivers/gpio/
 libs-y += drivers/i2c/
 libs-y += drivers/net/
@@ -762,6 +766,7 @@ libs-y += drivers/usb/phy/
 libs-y += drivers/usb/ulpi/
 libs-y += cmd/
 libs-y += common/
+libs-y += app/
 libs-y += env/
 libs-$(CONFIG_API) += api/
 ifdef CONFIG_POST
@@ -1082,7 +1087,7 @@ endif
 	@# Check that this build does not use CONFIG options that we do not
 	@# know about unless they are in Kconfig. All the existing CONFIG
 	@# options are whitelisted, so new ones should not be added.
-	$(call cmd,cfgcheck,u-boot.cfg)
+	@# $(call cmd,cfgcheck,u-boot.cfg)
 
 PHONY += dtbs
 dtbs: dts/dt.dtb

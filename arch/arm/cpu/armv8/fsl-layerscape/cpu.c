@@ -114,7 +114,7 @@ static struct mm_region early_map[] = {
 	(defined(CONFIG_SPL) && !defined(CONFIG_SPL_BUILD))
 	  PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 #else	/* Start with nGnRnE and PXN and UXN to prevent speculative access */
-	  PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) | PTE_BLOCK_PXN | PTE_BLOCK_UXN |
+	  PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 #endif
 	  PTE_BLOCK_OUTER_SHARE | PTE_BLOCK_NS
 	},
@@ -173,7 +173,7 @@ static struct mm_region early_map[] = {
 	(defined(CONFIG_SPL) && !defined(CONFIG_SPL_BUILD))
 	  PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 #else	/* Start with nGnRnE and PXN and UXN to prevent speculative access */
-	  PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) | PTE_BLOCK_PXN | PTE_BLOCK_UXN |
+	  PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 #endif
 	  PTE_BLOCK_OUTER_SHARE | PTE_BLOCK_NS
 	},
@@ -526,9 +526,9 @@ static inline void final_mmu_setup(void)
 		 */
 		switch (final_map[index].virt) {
 		case CONFIG_SYS_FSL_DRAM_BASE1:
-			final_map[index].virt = gd->bd->bi_dram[0].start;
-			final_map[index].phys = gd->bd->bi_dram[0].start;
-			final_map[index].size = gd->bd->bi_dram[0].size;
+			final_map[index].virt = 0x80000000;
+			final_map[index].phys = 0x80000000;
+			final_map[index].size = 0x80000000;
 			break;
 #ifdef CONFIG_SYS_FSL_DRAM_BASE2
 		case CONFIG_SYS_FSL_DRAM_BASE2:
@@ -1126,10 +1126,6 @@ int arch_early_init_r(void)
 #endif
 	if (check_psci()) {
 		debug("PSCI: PSCI does not exist.\n");
-
-		/* if PSCI does not exist, boot secondary cores here */
-		if (fsl_layerscape_wake_seconday_cores())
-			printf("Did not wake secondary cores\n");
 	}
 
 	config_core_prefetch();
@@ -1163,6 +1159,17 @@ int arch_early_init_r(void)
 #endif
 #ifdef CONFIG_PCIE_ECAM_GENERIC
 	set_ecam_icids();
+#endif
+	return 0;
+}
+
+int eth_early_init_r(void)
+{
+#ifdef CONFIG_SYS_FSL_HAS_RGMII
+	fsl_rgmii_init();
+#endif
+#ifdef CONFIG_FMAN_ENET
+	fman_enet_init();
 #endif
 	return 0;
 }
@@ -1309,6 +1316,7 @@ phys_size_t get_effective_memsize(void)
 		ea_size = gd->ram_size;
 	}
 
+#ifndef CONFIG_ARCH_LX2160A
 #ifdef CONFIG_SYS_MEM_RESERVE_SECURE
 	/* Check if we have enough space for secure memory */
 	if (ea_size > CONFIG_SYS_MEM_RESERVE_SECURE)
@@ -1324,6 +1332,7 @@ phys_size_t get_effective_memsize(void)
 		else
 			printf("Error: No enough space for reserved memory.\n");
 	}
+#endif
 
 	return ea_size;
 }
@@ -1414,10 +1423,6 @@ int dram_init_banksize(void)
 	phys_size_t dp_ddr_size;
 #endif
 
-#ifdef CONFIG_TFABOOT
-	if (!tfa_dram_init_banksize())
-		return 0;
-#endif
 	/*
 	 * gd->ram_size has the total size of DDR memory, less reserved secure
 	 * memory. The DDR extends from low region to high region(s) presuming
@@ -1436,7 +1441,14 @@ int dram_init_banksize(void)
 	}
 #endif
 
-	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	if (get_core_id() == CONFIG_MASTER_CORE)
+		gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	else
+		gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE +
+			CONFIG_SYS_DDR_SDRAM_MASTER_SIZE +
+			CONFIG_SYS_DDR_SDRAM_SLAVE_SIZE *
+			(get_core_id() - 1);
+
 	if (gd->ram_size > CONFIG_SYS_DDR_BLOCK1_SIZE) {
 		gd->bd->bi_dram[0].size = CONFIG_SYS_DDR_BLOCK1_SIZE;
 		gd->bd->bi_dram[1].start = CONFIG_SYS_DDR_BLOCK2_BASE;
@@ -1570,7 +1582,7 @@ void update_early_mmu_table(void)
 
 	if (gd->ram_size <= CONFIG_SYS_FSL_DRAM_SIZE1) {
 		mmu_change_region_attr(
-					CONFIG_SYS_SDRAM_BASE,
+					gd->bd->bi_dram[0].start,
 					gd->ram_size,
 					PTE_BLOCK_MEMTYPE(MT_NORMAL)	|
 					PTE_BLOCK_OUTER_SHARE		|
@@ -1578,7 +1590,7 @@ void update_early_mmu_table(void)
 					PTE_TYPE_VALID);
 	} else {
 		mmu_change_region_attr(
-					CONFIG_SYS_SDRAM_BASE,
+					gd->bd->bi_dram[0].start,
 					CONFIG_SYS_DDR_BLOCK1_SIZE,
 					PTE_BLOCK_MEMTYPE(MT_NORMAL)	|
 					PTE_BLOCK_OUTER_SHARE		|

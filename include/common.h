@@ -7,6 +7,9 @@
  *
  * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ *
+ * Copyright 2018-2021 NXP
+ *
  */
 
 #ifndef __COMMON_H_
@@ -31,6 +34,9 @@
 #include <part.h>
 #include <flash.h>
 #include <image.h>
+#if defined(CONFIG_MP)
+#include <asm/arch/mp.h>
+#endif
 #include <log.h>
 #include <asm/u-boot.h> /* boot information for Linux kernel */
 #include <asm/global_data.h>	/* global data used for startup functions */

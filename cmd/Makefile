@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2004-2006
+# Copyright 2019 NXP
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
 ifndef CONFIG_SPL_BUILD
@@ -44,6 +45,7 @@ obj-$(CONFIG_CMD_DATE) += date.o
 obj-$(CONFIG_CMD_DEMO) += demo.o
 obj-$(CONFIG_CMD_DM) += dm.o
 obj-$(CONFIG_CMD_SOUND) += sound.o
+obj-$(CONFIG_CMD_WAVPLAYER) += wavplayer.o
 ifdef CONFIG_POST
 obj-$(CONFIG_CMD_DIAG) += diag.o
 endif
@@ -94,6 +96,7 @@ obj-$(CONFIG_CMD_MDIO) += mdio.o
 obj-$(CONFIG_CMD_MISC) += misc.o
 obj-$(CONFIG_CMD_MMC) += mmc.o
 obj-$(CONFIG_MP) += mp.o
+obj-$(CONFIG_ICC) += icc.o
 obj-$(CONFIG_CMD_MTD) += mtd.o
 obj-$(CONFIG_CMD_MTDPARTS) += mtdparts.o
 ifneq ($(CONFIG_CMD_NAND)$(CONFIG_CMD_SF),)

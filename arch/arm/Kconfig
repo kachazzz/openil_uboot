@@ -9,6 +9,170 @@ config ARM64
 	select PHYS_64BIT
 	select SYS_CACHE_SHIFT_6
 
+config BAREMETAL
+	bool "Enable baremetal features"
+	default y
+
+if BAREMETAL
+config GPIO_COREID_SET
+	bool "Enable GPIO for baremetal"
+
+if GPIO_COREID_SET
+config GPIO_GPIO0_COREID
+	int "The core GPIO0 assigned"
+	default 0
+
+config GPIO_GPIO1_COREID
+	int "The core GPIO1 assigned"
+	default 0
+
+config GPIO_GPIO2_COREID
+	int "The core GPIO2 assigned"
+	default 0
+
+config GPIO_GPIO5_COREID
+	int "The core GPIO5 assigned"
+	default 0
+endif
+
+config I2C_COREID_SET
+	bool "Enable I2C for baremetal"
+	default n
+
+if I2C_COREID_SET
+config SYS_I2C_MXC_I2C0_COREID
+	int "The core I2C0 assigned"
+	default 0
+
+config SYS_I2C_MXC_I2C1_COREID
+	int "The core I2C1 assigned"
+	default 0
+
+config SYS_I2C_MXC_I2C2_COREID
+	int "The core I2C2 ssigned"
+	default 0
+
+config SYS_I2C_MXC_I2C3_COREID
+	int "The core I2C3 assigned"
+	default 0
+endif
+
+config IRQ_COREID_SET
+	bool "Enable IRQ for baremetal"
+	default n
+
+config ICC_COREID_SET
+	bool "Enable ICC for baremetal"
+	default y
+
+config QSPI_COREID_SET
+	bool "Enable QSPI for baremetal"
+	default n
+
+if QSPI_COREID_SET
+config QSPI_QSPI0_COREID
+	int "The core QSPI0 assigned"
+	default 1
+endif
+
+config FMAN_COREID_SET
+	bool "Enable FMAN for baremetal"
+	default n
+
+if FMAN_COREID_SET
+config FMAN_FMAN1_COREID
+	int "The coer FMAN1 assigned"
+	default "1"
+endif
+
+config USB_COREID_SET
+	bool "Enable USB for baremetal"
+	default n
+
+if USB_COREID_SET
+config USB_USB0_COREID
+	int "The core USB0 assigned"
+	default 0
+
+config USB_USB1_COREID
+	int "The core USB1 assigned"
+	default 0
+
+config USB_USB2_COREID
+	int "The core USB2 assigned"
+	default 0
+
+config USB_CTL_NUM
+	int "USB Controller numbers "
+	default 1
+endif
+
+config PCIE_COREID_SET
+	bool "Enable PCIE for baremetal"
+	default n
+
+if PCIE_COREID_SET
+config PCIE_PCIE1_COREID
+	int "The core PCIe1 assigned"
+	default "0"
+
+config PCIE_PCIE2_COREID
+	int "The core PCIe2 assigned"
+	default "0"
+
+config PCIE_PCIE3_COREID
+	int "The core PCIe3 assigned"
+	default "0"
+
+config PCIE_CTL_NUM
+	int "PCIe Controller numbers "
+	default "3"
+endif
+
+config CAN_COREID_SET
+	bool "Enable FlexCAN for baremetal"
+	default n
+
+config ENETC_COREID_SET
+	bool "Enable ENETC for baremetal"
+	default n
+
+if ENETC_COREID_SET
+config ENETC_ENETC1_COREID
+	int "The core Enetc1 assigned"
+	default "1"
+
+config ENETC_CTL_NUM
+	int "ENETC controller numbers"
+	default "1"
+endif
+
+config SAI_COREID_SET
+	bool "Enable SAI for baremetal"
+	default n
+
+config IFC_COREID_SET
+	bool "Enable IFC for baremetal"
+	default n
+
+if IFC_COREID_SET
+config IFC_COREID
+	int "The core IFC assigned"
+	default "1"
+endif
+
+config FEC_COREID_SET
+	bool "Enable FEC MXC for baremetal"
+	default n
+
+if FEC_COREID_SET
+config FEC_NIC0_COREID
+	int "The core FEC MXC assigned"
+	default "1"
+endif
+
+endif
+
 if ARM64
 config POSITION_INDEPENDENT
 	bool "Generate position-independent pre-relocation code"

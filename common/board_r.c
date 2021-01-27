@@ -60,6 +60,9 @@
 #include <linux/compiler.h>
 #include <linux/err.h>
 #include <efi_loader.h>
+#include <asm/interrupt-gic.h>
+#include <flexcan.h>
+#include <flextimer.h>
 #include <wdt.h>
 #if defined(CONFIG_GPIO_HOG)
 #include <asm/gpio.h>
@@ -84,6 +87,11 @@ __weak int board_flash_wp_on(void)
 
 __weak void cpu_secondary_init_r(void)
 {
+}
+
+__weak int get_core_id(void)
+{
+	return 0;
 }
 
 static int initr_secondary_cpu(void)
@@ -129,6 +137,14 @@ static int initr_caches(void)
 	return 0;
 }
 #endif
+
+
+static int initr_caches_slave(void)
+{
+	/* Enable caches */
+	enable_caches_slave();
+	return 0;
+}
 
 __weak int fixup_cpu(void)
 {
@@ -378,6 +394,11 @@ static int initr_flash(void)
 	ulong flash_size = 0;
 	bd_t *bd = gd->bd;
 
+#ifdef CONFIG_IFC_COREID_SET
+	if (get_core_id() != CONFIG_IFC_COREID)
+		return 0;
+#endif
+
 	puts("Flash: ");
 
 	if (board_flash_wp_on())
@@ -428,6 +449,11 @@ static int initr_flash(void)
 /* go init the NAND */
 static int initr_nand(void)
 {
+#ifdef CONFIG_IFC_COREID_SET
+	if (get_core_id() != CONFIG_IFC_COREID)
+		return 0;
+#endif
+
 	puts("NAND:  ");
 	nand_init();
 	printf("%lu MiB\n", nand_size() / 1024);
@@ -530,6 +556,18 @@ static int initr_enable_interrupts(void)
 }
 #endif
 
+static int initr_gic_init(void)
+{
+#ifdef CONFIG_ARM64
+	gic_set_offset();
+#endif
+	if (get_core_id() == CONFIG_SLAVE_FIRST_CORE)
+		gic_set_pri_common();
+	gic_set_pri_per_cpu();
+	gic_enable_dist();
+	return 0;
+}
+
 #ifdef CONFIG_CMD_NET
 static int initr_ethaddr(void)
 {
@@ -599,11 +637,15 @@ static int initr_bbmii(void)
 #ifdef CONFIG_CMD_NET
 static int initr_net(void)
 {
-	puts("Net:   ");
-	eth_initialize();
+#ifdef CONFIG_FMAN_FMAN1_COREID
+	if (get_core_id() == CONFIG_FMAN_FMAN1_COREID) {
+		puts("Net:   ");
+		eth_initialize();
 #if defined(CONFIG_RESET_PHY_R)
-	debug("Reset Ethernet PHY\n");
-	reset_phy();
+		debug("Reset Ethernet PHY\n");
+		reset_phy();
+#endif
+	}
 #endif
 	return 0;
 }
@@ -703,9 +745,95 @@ static int run_main_loop(void)
 #ifdef CONFIG_SANDBOX
 	sandbox_main_loop_init();
 #endif
+	u32 coreid = get_core_id();
+
+	if (coreid == CONFIG_MASTER_CORE) {
+		puts("Core[0] in the loop...\n");
 	/* main_loop() can return to retry autoboot, if so just run it again */
-	for (;;)
-		main_loop();
+		for (;;)
+			main_loop();
+	} else if (coreid == 1) {
+		puts("Core[1] in the loop...\n");
+		core1_main();
+		for (;;)
+			main_loop();
+			;
+	} else if (coreid == 2) {
+		puts("Core[2] in the loop...\n");
+		core2_main();
+		for (;;)
+			;
+	} else if (coreid == 3) {
+		puts("Core[3] in the loop...\n");
+		core3_main();
+		for (;;)
+			;
+	} else if (coreid == 4) {
+		puts("Core[4] in the loop...\n");
+		core4_main();
+		for (;;)
+			;
+	} else if (coreid == 5) {
+		puts("Core[5] in the loop...\n");
+		core5_main();
+		for (;;)
+			;
+	} else if (coreid == 6) {
+		puts("Core[6] in the loop...\n");
+		core6_main();
+		for (;;)
+			;
+	} else if (coreid == 7) {
+		puts("Core[7] in the loop...\n");
+		core7_main();
+		for (;;)
+			;
+	} else if (coreid == 8) {
+		puts("Core[8] in the loop...\n");
+		core8_main();
+		for (;;)
+			;
+	} else if (coreid == 9) {
+		puts("Core[9] in the loop...\n");
+		core9_main();
+		for (;;)
+			;
+	} else if (coreid == 10) {
+		puts("Core[10] in the loop...\n");
+		core10_main();
+		for (;;)
+			;
+	} else if (coreid == 11) {
+		puts("Core[11] in the loop...\n");
+		core11_main();
+		for (;;)
+			;
+	} else if (coreid == 12) {
+		puts("Core[12] in the loop...\n");
+		core12_main();
+		for (;;)
+			;
+	} else if (coreid == 13) {
+		puts("Core[13] in the loop...\n");
+		core13_main();
+		for (;;)
+			;
+	} else if (coreid == 14) {
+		puts("Core[14] in the loop...\n");
+		core14_main();
+		for (;;)
+			;
+	} else if (coreid == 15) {
+		puts("Core[15] in the loop...\n");
+		core15_main();
+		for (;;)
+			;
+	} else {
+		puts("Core[*] in the loop...\n");
+		for (;;)
+			;
+	}
+
 	return 0;
 }
 
@@ -929,6 +1057,9 @@ static init_fnc_t init_sequence_r[] = {
 	run_main_loop,
 };
 
+int icc_init(void);
+int eth_early_init_r(void);
+
 void board_init_r(gd_t *new_gd, ulong dest_addr)
 {
 	/*
@@ -956,6 +1087,136 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 #endif
 
 	if (initcall_run_list(init_sequence_r))
+		hang();
+
+	/* NOTREACHED - run_main_loop() does not return */
+	hang();
+}
+
+init_fnc_t init_sequence_r_slave[] = {
+	initr_trace,
+	initr_reloc,
+	/* TODO: could x86/PPC have this also perhaps? */
+#ifdef CONFIG_ARM
+#ifdef CONFIG_ARCH_IMX8M
+	initr_caches_slave,
+#else
+	initr_caches,
+#endif
+	/* Note: For Freescale LS2 SoCs, new MMU table is created in DDR.
+	 *	 A temporary mapping of IFC high region is since removed,
+	 *	 so environmental variables in NOR flash is not availble
+	 *	 until board_init() is called below to remap IFC to high
+	 *	 region.
+	 */
+#endif
+	initr_reloc_global_data,
+
+#ifndef CONFIG_ARCH_IMX8M
+	fdt_baremetal_setup,
+#endif
+
+#if defined(CONFIG_SYS_INIT_RAM_LOCK) && defined(CONFIG_E500)
+	initr_unlock_ram_in_cache,
+#endif
+	initr_barrier,
+	initr_malloc,
+	initr_console_record,
+#ifdef CONFIG_SYS_NONCACHED_MEMORY
+	initr_noncached,
+#endif
+	bootstage_relocate,
+#ifdef CONFIG_DM
+	initr_dm,
+#endif
+	initr_bootstage,
+	stdio_init_tables,
+	initr_serial,
+	initr_announce,
+	INIT_FUNC_WATCHDOG_RESET
+#ifdef CONFIG_CMD_NAND
+	initr_nand,
+#endif
+#ifdef CONFIG_MTD_NOR_FLASH
+	initr_flash,
+#endif
+#if defined(CONFIG_PCI) && defined(CONFIG_SYS_EARLY_PCI_INIT)
+	/*
+	 * Do early PCI configuration _before_ the flash gets initialised,
+	 * because PCU ressources are crucial for flash access on some boards.
+	 */
+	initr_pci,
+#endif
+#ifdef CONFIG_FMAN_COREID_SET
+	eth_early_init_r,
+#endif
+#if defined(CONFIG_ID_EEPROM) || defined(CONFIG_SYS_I2C_MAC_OFFSET)
+	mac_read_from_eeprom,
+#endif
+
+	INIT_FUNC_WATCHDOG_RESET
+#if defined(CONFIG_PCI) && !defined(CONFIG_SYS_EARLY_PCI_INIT)
+	/*
+	 * Do pci configuration
+	 */
+	initr_pci,
+#endif
+	stdio_add_devices,
+	initr_jumptable,
+	console_init_r,		/* fully init console as a device */
+	initr_env,
+	INIT_FUNC_WATCHDOG_RESET
+	/* PPC has a udelay(20) here dating from 2002. Why? */
+
+	interrupt_init,
+#if defined(CONFIG_ARM) || defined(CONFIG_AVR32)
+	initr_enable_interrupts,
+#endif
+#ifndef CONFIG_ARCH_LX2160A
+#ifndef CONFIG_ARCH_LS1028A
+	initr_gic_init,
+#endif
+#endif
+	icc_init,
+#ifdef CONFIG_CMD_NET
+	initr_ethaddr,
+#endif
+#ifdef CONFIG_CMD_NET
+	INIT_FUNC_WATCHDOG_RESET
+	/* TODO: need add initr_net after add ethernet feature */
+	/* initr_net,
+	 */
+#ifdef CONFIG_FMAN_COREID_SET
+	initr_net,
+#endif
+#endif
+#if CONFIG_FS_FLEXCAN
+	flexcan_init,
+	flextimer_init,
+#endif
+	run_main_loop,
+};
+
+void board_init_r_slave(gd_t *new_gd, ulong dest_addr)
+{
+#ifdef CONFIG_NEEDS_MANUAL_RELOC
+	int i;
+#endif
+
+#ifdef CONFIG_AVR32
+	mmu_init_r(dest_addr);
+#endif
+
+#if !defined(CONFIG_X86) && !defined(CONFIG_ARM) && !defined(CONFIG_ARM64)
+	gd = new_gd;
+#endif
+
+#ifdef CONFIG_NEEDS_MANUAL_RELOC
+	for (i = 0; i < ARRAY_SIZE(init_sequence_r_slave); i++)
+		init_sequence_r_slave[i] += gd->reloc_off;
+#endif
+
+	if (initcall_run_list(init_sequence_r_slave))
 		hang();
 
 	/* NOTREACHED - run_main_loop() does not return */

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2014-2015, Freescale Semiconductor
+ * Copyright 2018-2021 NXP
  */
 
 #ifndef _FSL_LAYERSCAPE_MP_H
@@ -22,8 +23,8 @@
 #define SPIN_TABLE_ELEM_LPID_IDX	2
 /* compare os arch and cpu arch */
 #define SPIN_TABLE_ELEM_ARCH_COMP_IDX	3
-#define WORDS_PER_SPIN_TABLE_ENTRY	8	/* pad to 64 bytes */
-#define SPIN_TABLE_ELEM_SIZE		64
+#define WORDS_PER_SPIN_TABLE_ENTRY	16	/* pad to 128 bytes */
+#define SPIN_TABLE_ELEM_SIZE		128
 
 /* os arch is same as cpu arch */
 #define OS_ARCH_SAME			0
@@ -46,6 +47,8 @@ phys_addr_t determine_mp_bootpg(void);
 void secondary_boot_func(void);
 int is_core_online(u64 cpu_id);
 u32 cpu_pos_mask(void);
+int get_core_id(void);
+int is_core_valid(unsigned int core);
 #endif
 
 #endif /* _FSL_LAYERSCAPE_MP_H */
